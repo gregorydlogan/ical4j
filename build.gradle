@@ -85,7 +85,8 @@ dependencies {
         'commons-io:commons-io:2.4',
         'org.ccil.cowan.tagsoup:tagsoup:1.2.1',
         "org.slf4j:slf4j-log4j12:$slf4jVersion",
-        'org.ehcache:ehcache:3.4.0'
+        'org.ehcache:ehcache:3.4.0',
+        'joda-time:joda-time:2.9.9'
 }
 
 jacocoTestReport {
