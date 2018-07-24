@@ -38,7 +38,7 @@ public class OpencastTests extends TestCase {
     start = java.util.Calendar.getInstance(cet);
     start.set(2016, Calendar.MARCH, 24, 12, 5);
     end = java.util.Calendar.getInstance(cet);
-    end.set(2016, Calendar.MARCH, 30, start.get(java.util.Calendar.HOUR_OF_DAY), 10);
+    end.set(2016, Calendar.MARCH, 30, start.get(java.util.Calendar.HOUR_OF_DAY), 10);  //GDLGDL: this is current 0 (start's time), should it be 1?
     durationMillis = (end.get(java.util.Calendar.MINUTE) - start.get(java.util.Calendar.MINUTE)) * 60 * 1000;
     days = "MO,TH,FR,SA,SU"; // --> A day before when switch to UCT (0-2)
     periods = generatePeriods(cet, start, end, days, durationMillis);
@@ -49,7 +49,9 @@ public class OpencastTests extends TestCase {
   private void assetCorrectDates(Calendar start, List<Period> periods) {
     start.set(Calendar.MILLISECOND, 0);
     for (Period p : periods) {
-      assertEquals("Incorrect start date", start.getTime().getTime(), p.getStart().getTime());
+      logger.info("" + p.getRangeStart());
+      assertEquals("Incorrect start date for period " + p, start.getTime().getTime(), p.getStart().getTime());
+      logger.info("Period " + p + " is correct");
       start.add(Calendar.DATE, 1);
     }
   }
@@ -65,11 +67,11 @@ public class OpencastTests extends TestCase {
 
     //On Sunday, March 27, 2:00 am CET->CEST
     start = Calendar.getInstance(cetCest);
-    start.set(2016, Calendar.MARCH, 15, 0, 5);
+    start.set(2016, Calendar.MARCH, 18, 0, 5);
     end = Calendar.getInstance(cetCest);
-    end.set(2016, Calendar.APRIL, 11, start.get(Calendar.HOUR_OF_DAY), 10);
+    end.set(2016, Calendar.APRIL, 7, start.get(Calendar.HOUR_OF_DAY), 10);  //GDLGDL: this is current 0 (start's time), should it be 1?
     durationMillis = (end.get(Calendar.MINUTE) - start.get(Calendar.MINUTE)) * 60 * 1000;
-    days = "MO,TH,FR,SA,SU";
+    days = "MO,TU,WE,TH,FR,SA,SU";
     doDSTChangeOverTest(cetCest, start, end, days, durationMillis);
   }
 
@@ -84,7 +86,7 @@ public class OpencastTests extends TestCase {
     start = Calendar.getInstance(cetCest);
     start.set(2016, Calendar.OCTOBER, 20, 0, 5);
     end = Calendar.getInstance(cetCest);
-    end.set(2016, Calendar.NOVEMBER, 8, start.get(Calendar.HOUR_OF_DAY), 10);
+    end.set(2016, Calendar.NOVEMBER, 8, start.get(Calendar.HOUR_OF_DAY), 10);  //GDLGDL: this is current 0 (start's time), should it be 1?
     durationMillis = (end.get(Calendar.MINUTE) - start.get(Calendar.MINUTE)) * 60 * 1000;
     days = "MO,TU,WE,TH,FR,SA,SU";
     doDSTChangeOverTest(cetCest, start, end, days, durationMillis);
@@ -109,7 +111,8 @@ public class OpencastTests extends TestCase {
               instance.get(Calendar.HOUR_OF_DAY),
               instance.get(Calendar.MINUTE),
               instance.getTimeZone().getID());
-      assertEquals( "Incorrect start time?", 0, instance.get(Calendar.HOUR_OF_DAY));
+      assertEquals( "Incorrect start hour", 0, instance.get(Calendar.HOUR_OF_DAY));
+      logger.info("Correct start time " + instance.getTime());
     }
   }
 
@@ -174,20 +177,22 @@ public class OpencastTests extends TestCase {
       logger.debug("Looking at recurrence date {}, {}", d);
       // Adjust for DST regardless of end time DST
       if (tz.inDaylightTime(periodStartTz)) {
-        d.setTime(d.getTime() + tz.getDSTSavings()); //Adjust for DST
+        //d.setTime(d.getTime() + tz.getDSTSavings()); //Adjust for DST
         // Special case for first Sunday
         // Sunday DST day bug: https://github.com/ical4j/ical4j/issues/117
-        if (!tz.inDaylightTime(d)
-                && cDate.get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.SUNDAY
-                && firstSundaySpecialCase) {
+        if (!tz.inDaylightTime(d)) {
+//                && cDate.get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.SUNDAY
+//                && firstSundaySpecialCase) {
+          logger.info("Adjusting forward 1");
           d.setTime(d.getTime() + tz.getDSTSavings());
           firstSundaySpecialCase = false;
         }
-      } else if (tz.inDaylightTime(d)  // Otherwise only adjust special case
-              && cDate.get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.SUNDAY
-              && firstSundaySpecialCase) {
+      } else if (tz.inDaylightTime(d)){  // Otherwise only adjust special case
+//              && cDate.get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.SUNDAY
+//              && firstSundaySpecialCase) {
         // Special case for first Sunday
         // Sunday DST day bug: https://github.com/ical4j/ical4j/issues/117
+        logger.info("Adjusting back 1");
         d.setTime(d.getTime() - tz.getDSTSavings());
         firstSundaySpecialCase = false;
       }
